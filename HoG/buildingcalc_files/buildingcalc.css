@@ -1,0 +1,32 @@
+
+table, td, th {
+	border-collapse: collapse;
+	border: 1px solid black;
+}
+
+table tbody, table thead
+{
+    display: block;
+}
+
+table tbody 
+{
+   overflow: auto;
+   height: 700px;
+}
+
+td {
+	text-align: center;
+}
+
+th {
+	color: #fff;
+	background-color: #777;
+}
+
+table tr:nth-child(odd) {
+    background-color: #ddd;
+}
+table tr:nth-child(even) {
+    background-color: #ddf;
+}
