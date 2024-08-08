@@ -89,8 +89,12 @@ document.addEventListener("DOMContentLoaded", function() {
 		var totalOption = el("option");
 		totalOption.value = "all";
 		totalOption.innerText = "All Galaxies";
+		var noVoid = el("option");
+		noVoid.value = "novoid";
+		noVoid.innerText = "No void";		
 		galaxyChooser.appendChild(galaxyOption);
 		galaxyChooser.appendChild(totalOption);
+		galaxyChooser.appendChild(noVoid);
 		var addedMaps = [];
 		for(var planetIndex=0; planetIndex < planets.length; planetIndex++) {
 			var map = planets[planetIndex].map;
@@ -117,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	
 	function canBuildOnPlanet(planet, building) {
 		var galaxyChooser = document.getElementById("galaxyselect");
-		return building.showRes() && building.environment.includes(planet.type) && (galaxyChooser.value == "all" || nebulas[galaxyChooser.value].planets.includes(planet.id));
+		return building.showRes() && building.environment.includes(planet.type) && isPlanetIncluded(planet.id);
 	}
 	  
     function calcBuildingResourcesCost(planetIndex, buildingIndex, amount) {
@@ -213,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			var numBuildings = producersArr[i].numBuildings;
 			var orgNumBuildings = numBuildings;
             while (i+1<producersArr.length && calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value < (producersArr[i+1].cost.value*1.2)) {
-                numBuildings++;
+				numBuildings++;
 				console.log(planets[producersArr[i].planetIndex].name + ": " + buildings[producersArr[i].buildingIndex].displayName + " - " + calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value + ", " + planets[producersArr[i+1].planetIndex].name + ": " + buildings[producersArr[i+1].buildingIndex].displayName + " - " + producersArr[i+1].cost.value*1.001);
             }
             var multipleBuildingsStr = "";
@@ -250,7 +254,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		
 		for(var h=0;h<buildings.length;h++) {
 			for(var l=0;l<game.planets.length;l++) {
-				if(galaxyChooser.value == "all" || nebulas[galaxyChooser.value].planets.includes(game.planets[l])){
+				if(isPlanetIncluded(l)){
 					totalResearch += buildings[h].production(planets[game.planets[l]]).researchPoint;
 				}			
 			}
@@ -300,7 +304,7 @@ document.addEventListener("DOMContentLoaded", function() {
 		var totalResources = 0;
 		
 		for(var l=0;l<game.planets.length;l++) {
-			if(galaxy.value == "all" || nebulas[galaxy.value].planets.includes(game.planets[l])) {
+			if(isPlanetIncluded(l)) {
 				totalResources += planets[game.planets[l]].resources[resourceIndex];
 			}
 		}
@@ -418,7 +422,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			for(var e=52,g=Array(buildings.length),h=0;h<buildings.length;h++)
 				g[h]=0;
 			for(var l=0;l<game.planets.length;l++)
-				if(galaxyChooser.value == "all" || nebulas[galaxyChooser.value].planets.includes(game.planets[l]))
+				if(isPlanetIncluded(l))
 					for(h=0;h<buildings.length;h++)
 						0!=buildings[h].resourcesProd[b]&&(g[h]+=planets[game.planets[l]].structure[h].number);
 			var m=0;
@@ -426,7 +430,7 @@ document.addEventListener("DOMContentLoaded", function() {
 				if(0<g[h]){
 					e+=20;
 					for(l=0;l<game.planets.length;l++)
-						if(galaxyChooser.value == "all" || nebulas[galaxyChooser.value].planets.includes(game.planets[l])){
+						if(isPlanetIncluded(l)){
 							m+=buildings[h].production(planets[game.planets[l]])[b];
 						}
 				}
@@ -692,6 +696,23 @@ document.addEventListener("DOMContentLoaded", function() {
 			
 //		console.log("totalCost: " + e);
 		return e;
+	}
+	
+	function isPlanetIncluded(planet_id) {
+		var galaxyChooser = document.getElementById("galaxyselect");
+		if (galaxyChooser.value == "novoid" && (nebulas[0].planets.includes(game.planets[planet_id]) || nebulas[0].planets.includes(game.planets[planet_id]))) {
+			return true;
+		}
+		
+		if (galaxyChooser.value == "novoid") {
+			return false;
+		}
+		
+		if (galaxyChooser.value == "all" || nebulas[galaxyChooser.value].planets.includes(game.planets[planet_id])) {
+			return true;
+		}
+		
+		return false;
 	}
 	
 	var isSaveImported = false;
