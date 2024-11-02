@@ -137,9 +137,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			if (0 < curResCost) {
 				cost += curResCost / resourceProduction[i];
 			}
-			if (0 > buildings[buildingIndex].rawProduction(planets[planetIndex])[i]) {
-				cost -= (buildings[buildingIndex].rawProduction(planets[planetIndex])[i] * resourceConsumptionMultiplier / resourceProduction[i]);
-			}
+//			if (0 > buildings[buildingIndex].rawProduction(planets[planetIndex])[i]) {
+//				cost -= (buildings[buildingIndex].rawProduction(planets[planetIndex])[i] * resourceConsumptionMultiplier / resourceProduction[i]);
+//			}
 		}       	   
         return cost;
     }
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			if ("solar" == buildings[buildingIndex].type2) {
 				curBuildingEnergyProd /= (planets[planetIndex].info.orbit * planets[planetIndex].info.orbit);
 			}
-			var numBuildingsRequired = Math.ceil(-energy/curBuildingEnergyProd);
+			var numBuildingsRequired = Math.abs(Math.ceil(-energy/curBuildingEnergyProd));
             var cost = calcBuildingResourcesCost(planetIndex, buildingIndex, numBuildingsRequired);
             var curBuilding = {buildingIndex: buildingIndex, numBuildings: numBuildingsRequired, cost: cost};
             energyBuildings.push(curBuilding);
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", function() {
 			cost.value += energyRequirements.cost;
 		}
 		cost.value /= production;
-		console.log(planets[planetIndex].name + ": " + buildings[buildingIndex].displayName + " - " + cost.value);		
+		console.log(planets[planetIndex].name + ": " + buildings[buildingIndex].displayName + " - " + cost.value + " - " + amount);		
 		return cost;
 	}
 	
@@ -195,7 +195,11 @@ document.addEventListener("DOMContentLoaded", function() {
 					if (numBuildingsRequired == 0) {
 						continue;
 					}
-					var currentBuilding = {planetIndex:planetIndex, buildingIndex:buildingIndex, cost:calcBuildingCostVal(planetIndex, buildingIndex, buildings[buildingIndex].rawProduction(planets[planetIndex])[resourceIndex], numBuildingsRequired), numBuildings:numBuildingsRequired};					
+					var curCost = calcBuildingCostVal(planetIndex, buildingIndex, buildings[buildingIndex].rawProduction(planets[planetIndex])[resourceIndex], numBuildingsRequired);
+					if (curCost > 0.2 && numBuildingsRequired > 1) {
+						numBuildingsRequired--;
+					}
+					var currentBuilding = {planetIndex:planetIndex, buildingIndex:buildingIndex, cost:curCost , numBuildings:numBuildingsRequired};											
 					producersArr.push(currentBuilding);
 				}
             }
@@ -216,9 +220,15 @@ document.addEventListener("DOMContentLoaded", function() {
 			}
 			var numBuildings = producersArr[i].numBuildings;
 			var orgNumBuildings = numBuildings;
-            while (i+1<producersArr.length && calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value < (producersArr[i+1].cost.value*1.2)) {
+			var curCost = calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value;
+            while (i+1<producersArr.length &&  curCost < (producersArr[i+1].cost.value*1.2)) {
 				numBuildings++;
 				console.log(planets[producersArr[i].planetIndex].name + ": " + buildings[producersArr[i].buildingIndex].displayName + " - " + calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value + ", " + planets[producersArr[i+1].planetIndex].name + ": " + buildings[producersArr[i+1].buildingIndex].displayName + " - " + producersArr[i+1].cost.value*1.001);
+				curCost = calcBuildingCostVal(producersArr[i].planetIndex, producersArr[i].buildingIndex, buildings[producersArr[i].buildingIndex].rawProduction(planets[producersArr[i].planetIndex])[resourceIndex], numBuildings + 1).value;
+				if (curCost >= 0.2) {
+					break;
+				}
+				
             }
             var multipleBuildingsStr = "";
             if (1 < numBuildings) {
@@ -284,6 +294,9 @@ document.addEventListener("DOMContentLoaded", function() {
 			var numBuildings = labsArr[i].numBuildings;
             while (i+1<labsArr.length && calcBuildingCostVal(labsArr[i].planet.id, labsArr[i].building.id, labsArr[i].building.rawProduction(labsArr[i].planet).researchPoint, numBuildings + 1).value < labsArr[i+1].cost.value) {
                 numBuildings++;
+				if (calcBuildingCostVal(labsArr[i].planet.id, labsArr[i].building.id, labsArr[i].building.rawProduction(labsArr[i].planet).researchPoint, numBuildings + 1).value > 0.2) {
+					break;
+				}
             }
             var multipleBuildingsStr = "";
             if (1 < numBuildings) {
@@ -700,7 +713,7 @@ document.addEventListener("DOMContentLoaded", function() {
 	
 	function isPlanetIncluded(planet_id) {
 		var galaxyChooser = document.getElementById("galaxyselect");
-		if (galaxyChooser.value == "novoid" && (nebulas[0].planets.includes(game.planets[planet_id]) || nebulas[0].planets.includes(game.planets[planet_id]))) {
+		if (galaxyChooser.value == "novoid" && (nebulas[0].planets.includes(game.planets[planet_id]) || nebulas[1].planets.includes(game.planets[planet_id]))) {
 			return true;
 		}
 		
